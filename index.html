@@ -345,7 +345,7 @@ const safeId=id=>/^[A-Za-z0-9_-]{1,40}$/.test(String(id))?String(id):uid();
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const fmtDate=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''};
 const isDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')&&!isNaN(new Date(s+'T00:00:00'));
-const validPhone=p=>p===''||/^[0-9+\-\s()]{6,20}$/.test(toEn(p));
+const validPhone=p=>p===''||(toEn(p).length<=45&&/^[0-9+\-\s()]{6,}$/.test(toEn(p).replace(/[\/،,|]/g,' ')));
 
 /* ============ Data layer ============ */
 const defaults=()=>({version:1,settings:{name:'',logo:'',phone:'',address:'',currency:'EGP',prefix:'INV-',counter:1,title:'فاتورة',footer:'شكراً لتعاملكم معنا',terms:'',taxNo:'',author:'',recCounter:1,showSign:true,lastBackup:''},customers:[],invoices:[],payments:[],authors:[]});
@@ -361,7 +361,7 @@ function normalize(d){
   const cids=new Set();
   out.customers=d.customers.filter(c=>c&&typeof c==='object').map(c=>{
     let id=safeId(c.id);while(cids.has(id))id=uid();cids.add(id);
-    return{id,name:String(c.name||'').trim().slice(0,100),phone:String(c.phone||'').slice(0,30),address:String(c.address||'').slice(0,300)};
+    return{id,name:String(c.name||'').trim().slice(0,100),phone:String(c.phone||'').slice(0,45),address:String(c.address||'').slice(0,300)};
   }).filter(c=>c.name);
   const nos=new Set(),iids=new Set();let maxSeq=0;
   for(const i of d.invoices){
@@ -376,9 +376,9 @@ function normalize(d){
     let id=safeId(i.id);while(iids.has(id))id=uid();iids.add(id);
     const name=String(i.customerName||'').trim().slice(0,100)||'عميل';
     let cust=out.customers.find(c=>c.id===i.customerId)||out.customers.find(c=>c.name.toLowerCase()===name.toLowerCase());
-    if(!cust){cust={id:uid(),name,phone:String(i.phone||'').slice(0,30),address:''};out.customers.push(cust);}
+    if(!cust){cust={id:uid(),name,phone:String(i.phone||'').slice(0,45),address:''};out.customers.push(cust);}
     const clampN=v=>{v=Number(v);return Number.isFinite(v)&&v>0?v:0};
-    const inv={id,no,seq:Number.isFinite(Number(i.seq))?Number(i.seq):seq,date:isDate(i.date)?i.date:today(),customerId:cust.id,customerName:name,phone:String(i.phone||'').slice(0,30),
+    const inv={id,no,seq:Number.isFinite(Number(i.seq))?Number(i.seq):seq,date:isDate(i.date)?i.date:today(),customerId:cust.id,customerName:name,phone:String(i.phone||'').slice(0,45),
       items,discType:i.discType==='percent'?'percent':'amount',discount:clampN(i.discount),extra:clampN(i.extra),paid:clampN(i.paid),notes:String(i.notes||'').slice(0,1000),author:String(i.author||'').trim().slice(0,60),createdAt:Number(i.createdAt)||Date.now()};
     if(inv.discType==='percent')inv.discount=Math.min(inv.discount,100);
     if(inv.paid>1e12)inv.paid=1e12;inv.prevBal=Number.isFinite(Number(i.prevBal))?r2(Number(i.prevBal)):0;
@@ -590,7 +590,7 @@ function renderForm(){
       <div class="field" style="max-width:220px"><label for="fDate">تاريخ الفاتورة *</label><input class="inp" type="date" id="fDate" data-f="date" value="${esc(form.date)}"></div>
       <div class="field"><label for="fCust">اسم العميل *</label><input class="inp" id="fCust" data-f="customerName" list="custList" value="${esc(form.customerName)}" placeholder="اكتب اسم العميل أو اخترّه" maxlength="100" autocomplete="off">
         <datalist id="custList">${db.customers.map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist></div>
-      <div class="field"><label for="fPhone">رقم الهاتف</label><input class="inp" id="fPhone" data-f="phone" value="${esc(form.phone)}" inputmode="tel" placeholder="01xxxxxxxxx" maxlength="20"></div>
+      <div class="field"><label for="fPhone">رقم الهاتف</label><input class="inp" id="fPhone" data-f="phone" value="${esc(form.phone)}" inputmode="tel" placeholder="01xxxxxxxxx" maxlength="45"></div>
       <div class="field"><label for="fAuthor">حُررت بواسطة *</label><input class="inp" id="fAuthor" data-f="author" list="authList" value="${esc(form.author)}" placeholder="اختر أو اكتب اسماً جديداً" maxlength="60" autocomplete="off"><datalist id="authList">${authOpts()}</datalist></div>
     </div>
     <div id="prevBox"></div>
@@ -871,7 +871,7 @@ function custModal(id){
   const m=openModal(`<div class="mhead"><h3>${c?'تعديل عميل':'إضافة عميل جديد'}</h3><button class="icon-btn" data-act="modal-close">${ic('x')}</button></div>
   <div class="mbody"><div class="grid" style="gap:14px">
    <div class="field"><label>الاسم *</label><input class="inp" id="cName" value="${esc(c?c.name:'')}" maxlength="100"></div>
-   <div class="field"><label>رقم الهاتف</label><input class="inp" id="cPhone" value="${esc(c?c.phone:'')}" inputmode="tel" maxlength="20"></div>
+   <div class="field"><label>رقم الهاتف</label><input class="inp" id="cPhone" value="${esc(c?c.phone:'')}" inputmode="tel" maxlength="45"></div>
    <div class="field"><label>العنوان</label><textarea class="inp" id="cAddr" maxlength="300">${esc(c?c.address:'')}</textarea></div></div></div>
   <div class="mfoot"><button class="btn pri" id="cSave">${ic('check')} حفظ</button><button class="btn ghost" data-act="modal-close">إلغاء</button></div>`);
   $('#cSave',m).onclick=()=>{
@@ -1109,7 +1109,7 @@ function renderSettings(){
     </div>
     <div class="grid g2" style="gap:14px">
       <div class="field"><label>اسم النشاط التجاري *</label><input class="inp" id="sName" value="${esc(s.name)}" maxlength="100"></div>
-      <div class="field"><label>رقم الهاتف</label><input class="inp" id="sPhone" value="${esc(s.phone)}" maxlength="40"></div>
+      <div class="field"><label>رقم الهاتف</label><input class="inp" id="sPhone" value="${esc(s.phone)}" maxlength="45"></div>
       <div class="field" style="grid-column:1/-1"><label>العنوان</label><input class="inp" id="sAddress" value="${esc(s.address)}" maxlength="300"></div>
       <div class="field" style="grid-column:1/-1"><label>اسم محرر الفواتير الافتراضي (يظهر في خانة «حُررت بواسطة»)</label><input class="inp" id="sAuthor" value="${esc(s.author)}" maxlength="60"></div>
       <div class="field" style="grid-column:1/-1"><label>أسماء المحررين المحفوظة</label><div class="chips" id="authChips" style="margin-top:0">${authChips()}</div></div>
