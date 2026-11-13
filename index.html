@@ -201,6 +201,14 @@ table.tbl{width:100%;border-collapse:collapse;min-width:720px}
 .rep-sum div{background:#f5f6fd;border-radius:10px;padding:10px 12px}
 .rep-sum small{display:block;color:#666;font-size:11.5px}.rep-sum b{font-size:15px}
 .sheet h3.sec{margin:18px 0 8px;font-size:14px;color:#1e1b4b}
+.st-table th,.st-table td{font-size:11.5px;padding:5px 6px}
+.st-table tr.st-first td{border-top:2px solid #c7d2fe}
+.st-table td.dim{color:#555;white-space:nowrap}
+.st-table .bal{font-weight:700;white-space:nowrap}
+.st-table .u{font-size:10px;color:#666;font-weight:400}
+.st-table tr.st-open td{background:#f5f6fd;font-weight:700}
+.st-table tr.st-adj td{color:#444}
+@media print{.st-table thead{display:table-header-group}.st-table tr{break-inside:avoid}}
 #printArea{display:none}
 
 #gate{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(160deg,#0f172a,#1e1b4b 60%,#312e81);align-items:center;justify-content:center;padding:16px}
@@ -273,6 +281,7 @@ html.gated .app,html.gated #modalRoot,html.gated #toasts{visibility:hidden}
 <symbol id="i-dollar" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
 <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></symbol>
 <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
 </svg>
 
@@ -304,7 +313,7 @@ html.gated .app,html.gated #modalRoot,html.gated #toasts{visibility:hidden}
     <p style="color:var(--mut);margin:6px 0 18px">أدخل كلمة السر للدخول</p>
     <input type="text" name="username" value="owner" autocomplete="username" hidden>
     <input class="inp" type="password" id="gPass" autocomplete="current-password" placeholder="كلمة السر" style="text-align:center">
-    <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;font-size:14px;color:var(--mut)"><input type="checkbox" id="gRemember" checked> تذكرني على هذا الجهاز</label>
+    <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;font-size:14px;color:var(--mut)"><input type="checkbox" id="gRemember"> تذكرني على هذا الجهاز</label>
     <p id="gMsg" style="color:var(--bad);min-height:22px;margin-bottom:6px;font-size:13.5px;font-weight:600"></p>
     <button class="btn pri" id="gBtn" style="width:100%">دخول</button>
   </form>
@@ -410,7 +419,7 @@ function calc(inv){
   const status=rem<=0?'paid':(paid>0?'partial':'unpaid');
   return{sub,disc,extra,net,paid,rem,bal,status};
 }
-const sortInv=(a,b)=>b.date.localeCompare(a.date)||((b.seq||0)-(a.seq||0))||((b.createdAt||0)-(a.createdAt||0));
+const sortInv=(a,b)=>((b.seq||0)-(a.seq||0))||((b.createdAt||0)-(a.createdAt||0));
 const findInv=id=>db.invoices.find(i=>i.id===id);
 const findCust=id=>db.customers.find(c=>c.id===id);
 const FUTURE={id:null,createdAt:Infinity};
@@ -483,7 +492,7 @@ function closeMenu(){$('#sidebar').classList.remove('open');$('#overlay').classL
 /* ============ Router ============ */
 let page='dashboard';
 let form=null;
-const filt={q:'',status:'',from:'',to:''};
+const filt={q:'',status:'',from:'',to:'',order:'desc'};
 const custQ={q:''};
 const rep={mode:'daily',day:today(),month:new Date().getMonth()+1,year:new Date().getFullYear(),from:today().slice(0,8)+'01',to:today()};
 let logoDraft=null;
@@ -582,7 +591,7 @@ function renderForm(){
       <div class="field"><label for="fCust">اسم العميل *</label><input class="inp" id="fCust" data-f="customerName" list="custList" value="${esc(form.customerName)}" placeholder="اكتب اسم العميل أو اخترّه" maxlength="100" autocomplete="off">
         <datalist id="custList">${db.customers.map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist></div>
       <div class="field"><label for="fPhone">رقم الهاتف</label><input class="inp" id="fPhone" data-f="phone" value="${esc(form.phone)}" inputmode="tel" placeholder="01xxxxxxxxx" maxlength="20"></div>
-      <div class="field"><label for="fAuthor">حُررت بواسطة</label><input class="inp" id="fAuthor" data-f="author" list="authList" value="${esc(form.author)}" placeholder="اختر أو اكتب اسماً جديداً" maxlength="60" autocomplete="off"><datalist id="authList">${authOpts()}</datalist></div>
+      <div class="field"><label for="fAuthor">حُررت بواسطة *</label><input class="inp" id="fAuthor" data-f="author" list="authList" value="${esc(form.author)}" placeholder="اختر أو اكتب اسماً جديداً" maxlength="60" autocomplete="off"><datalist id="authList">${authOpts()}</datalist></div>
     </div>
     <div id="prevBox"></div>
   </div>
@@ -657,6 +666,7 @@ function saveInvoice(){
   const cname=f.customerName.trim();
   if(!cname)return setErr($('#fCust'),'يرجى إدخال اسم العميل');
   if(!validPhone(f.phone.trim()))return setErr($('#fPhone'),'رقم الهاتف غير صحيح');
+  if(!f.author.trim())return setErr($('#fAuthor'),'يرجى إدخال اسم محرر الفاتورة (حُررت بواسطة)');
   const items=[];
   for(let i=0;i<f.items.length;i++){
     const it=f.items[i],q=parseNum(it.qty),p=parseNum(it.price);
@@ -745,20 +755,71 @@ function viewInvoice(id){
   const inv=findInv(id);if(!inv)return;
   openModal(`<div class="mhead"><h3>تفاصيل الفاتورة ${esc(inv.no)}</h3><button class="icon-btn" data-act="modal-close" aria-label="إغلاق">${ic('x')}</button></div>
     <div class="mbody sheet-wrap" style="padding:14px">${invoiceHTML(inv)}</div>
-    <div class="mfoot"><button class="btn pri" data-act="inv-print" data-id="${esc(id)}">${ic('print')} طباعة / حفظ PDF</button><button class="btn soft" data-act="inv-edit" data-id="${esc(id)}">${ic('edit')} تعديل</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
+    <div class="mfoot"><button class="btn pri" data-act="inv-print" data-id="${esc(id)}">${ic('print')} طباعة / حفظ PDF</button><button class="btn soft" data-act="inv-jpg" data-id="${esc(id)}">${ic('image')} حفظ كصورة JPG</button><button class="btn soft" data-act="inv-edit" data-id="${esc(id)}">${ic('edit')} تعديل</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
 }
 function printInvoice(id){const inv=findInv(id);if(!inv)return;toast('اختر «حفظ كملف PDF» من نافذة الطباعة لحفظ الفاتورة');printHTML(invoiceHTML(inv),`فاتورة-${inv.no}`)}
+
+/* ============ Export as JPG (no external libraries) ============ */
+let _fontCss=null;
+async function exportFontCss(){
+  if(_fontCss!==null)return _fontCss;
+  _fontCss='';
+  try{
+    const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),6000);
+    const css=await (await fetch('https://fonts.googleapis.com/css2?family=Cairo:wght@400..800&display=swap',{signal:ctl.signal})).text();
+    clearTimeout(t);
+    const blocks=[...css.matchAll(/\/\*\s*([\w-]+)\s*\*\/\s*@font-face\s*\{([^}]*)\}/g)].filter(m=>m[1]==='arabic'||m[1]==='latin');
+    const out=[];
+    for(const m of blocks){
+      const u=/url\((https:[^)]+)\)/.exec(m[2]);if(!u)continue;
+      const bytes=new Uint8Array(await (await fetch(u[1])).arrayBuffer());
+      let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+      out.push('@font-face{'+m[2].replace(u[0],'url(data:font/woff2;base64,'+btoa(bin)+')')+'}');
+    }
+    _fontCss=out.join('\n');
+  }catch(e){_fontCss=''}
+  return _fontCss;
+}
+async function exportJPG(sheetHTML,name){
+  try{
+    toast('جاري تجهيز الصورة...');
+    const W=794,tmp=document.createElement('div');tmp.innerHTML=sheetHTML;
+    const sheet=tmp.firstElementChild;
+    sheet.style.cssText='width:'+W+'px;max-width:none;margin:0;border:0;border-radius:0;background:#fff';
+    const probe=document.createElement('div');probe.style.cssText='position:fixed;left:-10000px;top:0;width:'+W+'px;visibility:hidden';
+    probe.appendChild(sheet.cloneNode(true));document.body.appendChild(probe);
+    const H=Math.ceil(probe.firstElementChild.getBoundingClientRect().height)+24;probe.remove();
+    const fonts=await exportFontCss();
+    const css=(fonts+'\n'+document.querySelector('style').textContent).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="${W}" height="${H}"><div xmlns="http://www.w3.org/1999/xhtml" dir="rtl" lang="ar" style="width:${W}px;height:${H}px;background:#fff;color:#111;font-family:'Cairo','Tajawal','Segoe UI',Tahoma,Arial,sans-serif"><style>${css}</style>${new XMLSerializer().serializeToString(sheet)}</div></foreignObject></svg>`;
+    const u8=new TextEncoder().encode(svg);let bin='';for(let i=0;i<u8.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+    const url='data:image/svg+xml;base64,'+btoa(bin);
+    window.__lastExportSvg=svg;
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error('img'));img.src=url});
+    const scale=Math.min(2,16000/H),cv=document.createElement('canvas');
+    cv.width=Math.round(W*scale);cv.height=Math.round(H*scale);
+    const cx=cv.getContext('2d'),paint=()=>{cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(img,0,0,cv.width,cv.height)};
+    paint();await new Promise(r=>setTimeout(r,150));paint();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
+    if(!blob)throw new Error('blob');
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=String(name).replace(/[\\/:*?\"<>|\s]+/g,'_')+'.jpg';
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+    toast('تم حفظ الصورة','ok');
+  }catch(e){console.warn('exportJPG failed:',e&&e.name,e&&e.message);toast('تعذر حفظ الصورة على هذا المتصفح. استخدم زر الطباعة ثم «حفظ كملف PDF».','error')}
+}
 
 /* ============ Invoices list ============ */
 function filteredInvoices(){
   const q=toEn(filt.q).trim().toLowerCase();
-  return db.invoices.filter(i=>{
+  const arr=db.invoices.filter(i=>{
     if(q&&!(i.no.toLowerCase().includes(q)||i.customerName.toLowerCase().includes(q)||toEn(i.phone||'').includes(q)))return false;
     if(filt.status&&calc(i).status!==filt.status)return false;
     if(filt.from&&i.date<filt.from)return false;
     if(filt.to&&i.date>filt.to)return false;
     return true;
   }).sort(sortInv);
+  return filt.order==='asc'?arr.reverse():arr;
 }
 function invList(){
   const list=filteredInvoices();
@@ -768,7 +829,7 @@ function invList(){
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th><th></th></tr></thead><tbody>
   ${list.map(i=>{const c=calc(i),id=esc(i.id);return `<tr><td><b>${esc(i.no)}</b></td><td class="num">${fmtDate(i.date)}</td><td>${esc(i.customerName)}${i.phone?`<br><small style="color:var(--mut)" dir="ltr">${esc(i.phone)}</small>`:''}</td>
    <td class="num">${money(c.net)}</td><td class="num">${money(c.paid)}</td><td class="num">${money(c.rem)}</td><td>${badge(c.status)}</td>
-   <td><div class="acts"><button class="icon-btn" title="عرض" data-act="inv-view" data-id="${id}">${ic('eye')}</button><button class="icon-btn" title="طباعة" data-act="inv-print" data-id="${id}">${ic('print')}</button><button class="icon-btn" title="تعديل" data-act="inv-edit" data-id="${id}">${ic('edit')}</button><button class="icon-btn del" title="حذف" data-act="inv-del" data-id="${id}">${ic('trash')}</button></div></td></tr>`}).join('')}
+   <td><div class="acts"><button class="icon-btn" title="عرض" data-act="inv-view" data-id="${id}">${ic('eye')}</button><button class="icon-btn" title="طباعة" data-act="inv-print" data-id="${id}">${ic('print')}</button><button class="icon-btn" title="حفظ كصورة JPG" data-act="inv-jpg" data-id="${id}">${ic('image')}</button><button class="icon-btn" title="تعديل" data-act="inv-edit" data-id="${id}">${ic('edit')}</button><button class="icon-btn del" title="حذف" data-act="inv-del" data-id="${id}">${ic('trash')}</button></div></td></tr>`}).join('')}
   </tbody></table></div>
   <div class="chips"><span class="chip">${list.length} فاتورة</span><span class="chip">المبيعات: ${money(r2(s))}</span><span class="chip">المحصّل: ${money(r2(p))}</span><span class="chip">المتبقي: ${money(r2(r))}</span></div>`;
 }
@@ -777,6 +838,7 @@ function renderInvoices(){
     <div class="row" style="margin-bottom:18px">
       <div class="field" style="flex:2"><label>بحث برقم الفاتورة أو اسم العميل</label><input class="inp" data-filter="q" value="${esc(filt.q)}" placeholder="ابحث..."></div>
       <div class="field"><label>الحالة</label><select class="inp" data-filter="status"><option value="">الكل</option>${Object.keys(ST).map(k=>`<option value="${k}" ${filt.status===k?'selected':''}>${ST[k][0]}</option>`).join('')}</select></div>
+      <div class="field"><label>الترتيب</label><select class="inp" data-filter="order"><option value="desc" ${filt.order==='desc'?'selected':''}>رقم الفاتورة: الأحدث أولاً</option><option value="asc" ${filt.order==='asc'?'selected':''}>رقم الفاتورة: الأقدم أولاً</option></select></div>
       <div class="field"><label>من تاريخ</label><input class="inp" type="date" data-filter="from" value="${esc(filt.from)}"></div>
       <div class="field"><label>إلى تاريخ</label><input class="inp" type="date" data-filter="to" value="${esc(filt.to)}"></div>
       <button class="btn ghost" data-act="filter-clear">مسح الفلاتر</button>
@@ -798,7 +860,7 @@ function custList(){
   if(!list.length)return `<div class="empty">${ic('search')}<p>لا توجد نتائج.</p></div>`;
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>الاسم</th><th>الهاتف</th><th>العنوان</th><th>الفواتير</th><th>إجمالي المشتريات</th><th>الرصيد</th><th></th></tr></thead><tbody>
   ${list.map(c=>{const st=custStats(c),id=esc(c.id);return `<tr><td><b>${esc(c.name)}</b></td><td dir="ltr" style="text-align:right">${esc(c.phone)||'—'}</td><td>${esc(c.address)||'—'}</td><td>${st.list.length}</td><td class="num">${money(st.sales)}</td><td>${balHTML(st.bal)}</td>
-  <td><div class="acts"><button class="icon-btn" title="تسجيل دفعة" data-act="pay-add" data-id="${id}">${ic('dollar')}</button><button class="icon-btn" title="كشف الحساب" data-act="cust-view" data-id="${id}">${ic('file')}</button><button class="icon-btn" title="تعديل" data-act="cust-edit" data-id="${id}">${ic('edit')}</button><button class="icon-btn del" title="حذف" data-act="cust-del" data-id="${id}">${ic('trash')}</button></div></td></tr>`}).join('')}</tbody></table></div>`;
+  <td><div class="acts"><button class="icon-btn" title="تسجيل دفعة" data-act="pay-add" data-id="${id}">${ic('dollar')}</button><button class="icon-btn" title="كشف الحساب" data-act="cust-view" data-id="${id}">${ic('file')}</button><button class="icon-btn" title="كشف حساب للطباعة (PDF / صورة)" data-act="stmt-open" data-id="${id}">${ic('print')}</button><button class="icon-btn" title="تعديل" data-act="cust-edit" data-id="${id}">${ic('edit')}</button><button class="icon-btn del" title="حذف" data-act="cust-del" data-id="${id}">${ic('trash')}</button></div></td></tr>`}).join('')}</tbody></table></div>`;
 }
 function renderCustomers(){
   return `<div class="card"><div class="toolbar"><div class="field" style="flex:1;min-width:200px;max-width:420px"><input class="inp" data-cq="1" value="${esc(custQ.q)}" placeholder="ابحث باسم العميل أو رقم الهاتف..."></div>
@@ -838,7 +900,81 @@ function custView(id){
   ${rows.map(r=>`<tr><td class="num">${fmtDate(r.date)}</td><td>${r.kind==='inv'?`فاتورة <b>${esc(r.ref)}</b>`:`دفعة <b>${esc(r.ref)}</b>${r.note?`<br><small style="color:var(--mut)">${esc(r.note)}</small>`:''}`}</td><td class="num">${r.debit?num2(r.debit):'—'}</td><td class="num">${r.credit?num2(r.credit):'—'}</td><td>${balHTML(r.run)}</td>
   <td><div class="acts">${r.kind==='inv'?`<button class="icon-btn" title="عرض الفاتورة" data-act="inv-view" data-id="${esc(r.id)}">${ic('eye')}</button>`:`<button class="icon-btn" title="إيصال الدفعة" data-act="pay-view" data-id="${esc(r.id)}">${ic('print')}</button><button class="icon-btn del" title="حذف الدفعة" data-act="pay-del" data-id="${esc(r.id)}">${ic('trash')}</button>`}</div></td></tr>`).join('')}</tbody></table></div>
   <div class="chips"><span class="chip">${ni} فاتورة</span><span class="chip">${np} دفعة</span><span class="chip">${run>0?'مدين (عليه): ':run<0?'دائن (له): ':'الرصيد: '}${money(Math.abs(run))}</span></div>`:`<div class="empty">${ic('file')}<p>لا توجد حركات لهذا العميل.</p></div>`}</div>
-  <div class="mfoot"><button class="btn pri" data-act="pay-add" data-id="${esc(id)}">${ic('dollar')} تسجيل دفعة</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
+  <div class="mfoot"><button class="btn pri" data-act="stmt-open" data-id="${esc(id)}">${ic('print')} كشف حساب للطباعة (PDF / صورة)</button><button class="btn soft" data-act="pay-add" data-id="${esc(id)}">${ic('dollar')} تسجيل دفعة</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
+}
+
+/* ============ Customer statement (printable) ============ */
+let stmt={cid:null,from:'',to:''};
+function stmtRows(cid,from,to){
+  const docs=[];
+  db.invoices.filter(i=>i.customerId===cid).forEach(i=>docs.push({date:i.date,t:i.createdAt||0,kind:'inv',x:i}));
+  db.payments.filter(p=>p.customerId===cid).forEach(p=>docs.push({date:p.date,t:p.createdAt||0,kind:'pay',x:p}));
+  docs.sort((a,b)=>a.date.localeCompare(b.date)||a.t-b.t);
+  const eff=d=>d.kind==='inv'?calc(d.x).bal:-d.x.amount;
+  let opening=0;if(from)docs.filter(d=>d.date<from).forEach(d=>{opening+=eff(d)});opening=r2(opening);
+  const list=docs.filter(d=>(!from||d.date>=from)&&(!to||d.date<=to));
+  let run=opening,sales=0,paidInv=0,paidPay=0;const rows=[];
+  list.forEach(d=>{
+    if(d.kind==='inv'){
+      const i=d.x,k=calc(i);let first=true;
+      const push=r=>{rows.push(Object.assign({first,date:first?i.date:'',ref:first?i.no:''},r));first=false};
+      i.items.forEach(t=>push({text:t.name,desc:t.desc,qty:Number(t.qty),price:t.price,debit:r2(t.qty*t.price),credit:0}));
+      if(k.disc>0)push({adj:1,text:'خصم'+(i.discType==='percent'?` (${Number(i.discount)}%)`:''),credit:k.disc,debit:0});
+      if(k.extra>0)push({adj:1,text:'مصاريف إضافية',debit:k.extra,credit:0});
+      if(k.paid>0)push({adj:1,text:'المدفوع عند الفاتورة',credit:k.paid,debit:0});
+      run=r2(run+k.bal);rows[rows.length-1].bal=run;sales+=k.net;paidInv+=k.paid;
+    }else{
+      const p=d.x;run=r2(run-p.amount);
+      rows.push({first:true,date:p.date,ref:p.no,text:'دفعة مستلمة',desc:p.note||'',debit:0,credit:p.amount,bal:run});paidPay+=p.amount;
+    }
+  });
+  return{rows,opening,closing:run,sales:r2(sales),paidInv:r2(paidInv),paidPay:r2(paidPay),count:list.length};
+}
+const balCell=b=>b===0?'0.00':`${num2(Math.abs(b))} <span class="u">${b>0?'مدين':'دائن'}</span>`;
+function statementHTML(cid,from,to){
+  const c=findCust(cid),s=db.settings;
+  if(!c)return '<div class="sheet"><p>العميل غير موجود</p></div>';
+  if(from&&to&&from>to)return '<div class="sheet"><p style="text-align:center;color:#b91c1c;padding:30px">تاريخ البداية يجب أن يكون قبل تاريخ النهاية</p></div>';
+  const d=stmtRows(cid,from,to);
+  const contact=[s.phone?`هاتف: ${esc(s.phone)}`:'',s.address?esc(s.address):'',s.taxNo?`الرقم الضريبي: ${esc(s.taxNo)}`:''].filter(Boolean).join('<br>');
+  const period=from&&to?`من ${fmtDate(from)} إلى ${fmtDate(to)}`:from?`من ${fmtDate(from)}`:to?`حتى ${fmtDate(to)}`:'كل الفترات';
+  const fl=d.closing>0?' (مدين - عليه)':d.closing<0?' (دائن - له)':'';
+  return `<div class="sheet">
+  <div class="inv-head">
+    <div class="inv-brand">${s.logo?`<img class="inv-logo" src="${esc(s.logo)}" alt="">`:`<div class="inv-logo-ph">${esc((s.name||'ح').trim().charAt(0))}</div>`}
+      <div><h2>${esc(s.name||'اسم النشاط التجاري')}</h2><p>${contact}</p></div></div>
+    <div class="inv-title"><h1 style="font-size:24px">كشف حساب</h1>
+      <div class="inv-meta"><span>الفترة</span><b>${period}</b><span>تاريخ الإصدار</span><b>${fmtDate(today())}</b></div></div>
+  </div>
+  <div class="inv-cust"><div><small>العميل</small><b>${esc(c.name)}</b></div>${c.phone?`<div><small>رقم الهاتف</small><b dir="ltr">${esc(c.phone)}</b></div>`:''}${c.address?`<div><small>العنوان</small><b>${esc(c.address)}</b></div>`:''}</div>
+  ${d.count||from?`<table class="inv-table st-table"><thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th class="c">الكمية</th><th class="l">سعر الوحدة</th><th class="l">مدين (عليه)</th><th class="l">دائن (له)</th><th class="l">الرصيد</th></tr></thead><tbody>
+  ${from?`<tr class="st-open"><td colspan="7">رصيد سابق (قبل ${fmtDate(from)})</td><td class="l bal">${balCell(d.opening)}</td></tr>`:''}
+  ${d.rows.map(r=>`<tr class="${r.first?'st-first':''} ${r.adj?'st-adj':''}"><td class="dim">${r.date?fmtDate(r.date):''}</td><td class="dim">${esc(r.ref)}</td><td>${esc(r.text)}${r.desc?`<small>${esc(r.desc)}</small>`:''}</td><td class="c">${r.qty!==undefined?r.qty:''}</td><td class="l">${r.price!==undefined?num2(r.price):''}</td><td class="l">${r.debit?num2(r.debit):''}</td><td class="l">${r.credit?num2(r.credit):''}</td><td class="l bal">${r.bal!==undefined?balCell(r.bal):''}</td></tr>`).join('')}
+  </tbody></table>`:`<p style="text-align:center;color:#777;padding:28px">لا توجد حركات لهذا العميل في هذه الفترة.</p>`}
+  <div class="inv-bottom"><div class="inv-notes"></div>
+    <table class="inv-totals">
+      ${from?`<tr><td>رصيد سابق</td><td>${d.opening===0?'0.00':num2(Math.abs(d.opening))+(d.opening>0?' مدين':' دائن')}</td></tr>`:''}
+      <tr><td>إجمالي الفواتير (الصافي)</td><td>${money(d.sales)}</td></tr>
+      <tr><td>المدفوع عند الفواتير</td><td>${money(d.paidInv)}</td></tr>
+      <tr><td>الدفعات المستلمة</td><td>${money(d.paidPay)}</td></tr>
+      <tr class="net"><td>الرصيد النهائي${fl}</td><td>${d.closing===0?'مسدد بالكامل':money(Math.abs(d.closing))}</td></tr>
+    </table>
+  </div>
+  ${s.footer?`<div class="inv-foot">${esc(s.footer)}</div>`:''}
+  </div>`;
+}
+function stmtRefresh(){const o=$('#stmtOut');if(o)o.innerHTML=statementHTML(stmt.cid,stmt.from,stmt.to)}
+function stmtCheck(){if(stmt.from&&stmt.to&&stmt.from>stmt.to){toast('تاريخ البداية يجب أن يكون قبل تاريخ النهاية','error');return true}return false}
+function stmtOpen(cid){
+  const c=findCust(cid);if(!c)return;
+  stmt={cid,from:'',to:''};
+  openModal(`<div class="mhead"><h3>كشف حساب ${esc(c.name)}</h3><button class="icon-btn" data-act="modal-close" aria-label="إغلاق">${ic('x')}</button></div>
+  <div class="mbody" style="background:#eef0f6"><div class="row" style="margin-bottom:12px;background:#fff;padding:12px;border-radius:12px">
+    <div class="field" style="max-width:200px"><label>من تاريخ</label><input class="inp" type="date" id="stFrom" data-st="from"></div>
+    <div class="field" style="max-width:200px"><label>إلى تاريخ</label><input class="inp" type="date" id="stTo" data-st="to"></div>
+    <button class="btn ghost sm" data-act="stmt-range" data-r="month">هذا الشهر</button><button class="btn ghost sm" data-act="stmt-range" data-r="all">كل الفترات</button></div>
+    <div id="stmtOut">${statementHTML(cid,'','')}</div></div>
+  <div class="mfoot"><button class="btn pri" data-act="stmt-print">${ic('print')} طباعة / حفظ PDF</button><button class="btn soft" data-act="stmt-jpg">${ic('image')} حفظ كصورة JPG</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
 }
 
 /* ============ Payments ============ */
@@ -851,7 +987,7 @@ function payModal(cid){
    <div id="pyBal"></div>
    <div class="row"><div class="field"><label>المبلغ *</label><input class="inp" id="pyAmt" inputmode="decimal" placeholder="0.00"></div>
    <div class="field"><label>التاريخ *</label><input class="inp" type="date" id="pyDate" value="${today()}"></div></div>
-   <div class="field"><label>حُررت بواسطة</label><input class="inp" id="pyAuth" list="authList2" value="${esc(db.settings.author||'')}" maxlength="60" autocomplete="off"><datalist id="authList2">${authOpts()}</datalist></div>
+   <div class="field"><label>حُررت بواسطة *</label><input class="inp" id="pyAuth" list="authList2" value="${esc(db.settings.author||'')}" maxlength="60" autocomplete="off"><datalist id="authList2">${authOpts()}</datalist></div>
    <div class="field"><label>ملاحظة</label><input class="inp" id="pyNote" maxlength="300" placeholder="مثال: دفعة نقدية"></div></div></div>
   <div class="mfoot"><button class="btn pri" id="pySave">${ic('check')} حفظ الدفعة</button><button class="btn ghost" data-act="modal-close">إلغاء</button></div>`);
   const upd=()=>{
@@ -868,6 +1004,7 @@ function payModal(cid){
     if(!(amt>0))return bad('#pyAmt','المبلغ يجب أن يكون رقماً أكبر من صفر');
     if(amt>1e12)return bad('#pyAmt','المبلغ كبير جداً');
     const date=$('#pyDate',m).value;if(!isDate(date))return bad('#pyDate','التاريخ غير صحيح');
+    if(!$('#pyAuth',m).value.trim())return bad('#pyAuth','اسم المحرر (حُررت بواسطة) مطلوب');
     const author=$('#pyAuth',m).value.trim().slice(0,60),rec=nextRec();
     const p={id:uid(),no:rec.no,date,customerId:cu,customerName:findCust(cu).name,amount:r2(amt),note:$('#pyNote',m).value.trim(),author,prevBal:custBal(cu),createdAt:Date.now()};
     db.payments.push(p);db.settings.recCounter=rec.seq+1;upsertAuthor(author);
@@ -904,7 +1041,7 @@ function payView(id){
   const p=findPay(id);if(!p)return;
   openModal(`<div class="mhead"><h3>إيصال ${esc(p.no)}</h3><button class="icon-btn" data-act="modal-close" aria-label="إغلاق">${ic('x')}</button></div>
     <div class="mbody sheet-wrap" style="padding:14px">${receiptHTML(p)}</div>
-    <div class="mfoot"><button class="btn pri" data-act="pay-print" data-id="${esc(id)}">${ic('print')} طباعة / حفظ PDF</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
+    <div class="mfoot"><button class="btn pri" data-act="pay-print" data-id="${esc(id)}">${ic('print')} طباعة / حفظ PDF</button><button class="btn soft" data-act="pay-jpg" data-id="${esc(id)}">${ic('image')} حفظ كصورة JPG</button><button class="btn ghost" data-act="modal-close">إغلاق</button></div>`,{wide:true,noFocus:true});
 }
 
 /* ============ Reports ============ */
@@ -1156,6 +1293,18 @@ document.addEventListener('click',async e=>{
       if(await confirmBox({title:'تسجيل الخروج',msg:bad?'يوجد تغييرات لم تُرفع للسحابة بسبب خطأ في الاتصال، وستُفقد إذا خرجت الآن. هل تريد الخروج؟':'سيتم تسجيل الخروج ومسح نسخة البيانات من هذا الجهاز (بياناتك محفوظة في السحابة).',ok:'تسجيل الخروج',danger:bad}))C.signOut();
       break}
     case 'cloud-sync':if(window.Cloud)window.Cloud.syncNow();break;
+    case 'stmt-open':stmtOpen(id);break;
+    case 'stmt-range':{
+      if(b.dataset.r==='all'){stmt.from='';stmt.to=''}
+      else{const t=today();stmt.from=t.slice(0,8)+'01';stmt.to=t}
+      const f=$('#stFrom'),e2=$('#stTo');if(f)f.value=stmt.from;if(e2)e2.value=stmt.to;stmtRefresh();break}
+    case 'stmt-print':{
+      if(stmtCheck())break;const c=findCust(stmt.cid);
+      toast('اختر «حفظ كملف PDF» من نافذة الطباعة لحفظ كشف الحساب');
+      printHTML(statementHTML(stmt.cid,stmt.from,stmt.to),'كشف-حساب-'+(c?c.name:''));break}
+    case 'stmt-jpg':{if(stmtCheck())break;const c=findCust(stmt.cid);exportJPG(statementHTML(stmt.cid,stmt.from,stmt.to),'كشف-حساب-'+(c?c.name:''));break}
+    case 'inv-jpg':{const inv=findInv(id);if(inv)exportJPG(invoiceHTML(inv),inv.no);break}
+    case 'pay-jpg':{const p=findPay(id);if(p)exportJPG(receiptHTML(p),p.no);break}
     case 'pay-add':payModal(id||null);break;
     case 'pay-view':payView(id);break;
     case 'pay-print':{const p=findPay(id);if(!p)break;toast('اختر «حفظ كملف PDF» من نافذة الطباعة لحفظ الإيصال');printHTML(receiptHTML(p),`إيصال-${p.no}`);break}
@@ -1178,6 +1327,7 @@ $('#overlay').addEventListener('click',closeMenu);
 
 document.addEventListener('input',e=>{
   const t=e.target;
+  if(t.dataset.st!==undefined){stmt[t.dataset.st]=t.value;stmtRefresh();return}
   if(t.dataset.filter!==undefined){filt[t.dataset.filter]=t.value;const l=$('#invList');if(l)l.innerHTML=invList();return}
   if(t.dataset.cq!==undefined){custQ.q=t.value;$('#custList2').innerHTML=custList();return}
   if(t.dataset.f===undefined||!form||page!=='new')return;
